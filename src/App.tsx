@@ -17,23 +17,27 @@ import { CreateChallengeModal } from './components/dashboard/CreateChallengeModa
 import { UpdateProgressModal } from './components/dashboard/UpdateProgressModal';
 import { ViewChallengeModal } from './components/dashboard/ViewChallengeModal';
 import {
-  currentUser,
-  overviewStats as initialStats,
-  initialActivities,
-  initialChallenges,
-  initialActivitiesFeed,
-  weeklyPerformance,
-} from './data/mockData';
+  getCurrentUser,
+  getInitialActivities,
+  getInitialChallenges,
+  getInitialActivityFeed,
+  getWeeklyPerformance,
+  getOverviewStats,
+} from './services/dataService';
 import type { Activity, Challenge, ActivityItemData } from './types';
 
 export function App() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Core Data States
-  const [activities, setActivities] = useState<Activity[]>(initialActivities);
-  const [challenges, setChallenges] = useState<Challenge[]>(initialChallenges);
-  const [feedItems, setFeedItems] = useState<ActivityItemData[]>(initialActivitiesFeed);
+  // Current user and static performance metrics from data service
+  const currentUser = getCurrentUser();
+  const weeklyPerformance = getWeeklyPerformance();
+
+  // Core Data States initialized via data service
+  const [activities, setActivities] = useState<Activity[]>(getInitialActivities);
+  const [challenges, setChallenges] = useState<Challenge[]>(getInitialChallenges);
+  const [feedItems, setFeedItems] = useState<ActivityItemData[]>(getInitialActivityFeed);
 
   // Modals state
   const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
@@ -138,28 +142,11 @@ export function App() {
     }
   };
 
-  // Compute live overview stats
+  // Compute live overview stats and completion metric
+  const currentStats = getOverviewStats(activities, challenges);
   const completedActivitiesCount = activities.filter(
     (a) => a.todayActualProgress >= a.personalDailyTarget
   ).length;
-
-  const currentStats = initialStats.map((stat) => {
-    if (stat.id === 'stat-activities') {
-      return {
-        ...stat,
-        value: activities.length,
-        subtext: `${completedActivitiesCount} personal goals met today`,
-      };
-    }
-    if (stat.id === 'stat-challenges') {
-      return {
-        ...stat,
-        value: challenges.length,
-        subtext: `${challenges.length} active friend duels`,
-      };
-    }
-    return stat;
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 flex text-slate-900 font-sans antialiased">
